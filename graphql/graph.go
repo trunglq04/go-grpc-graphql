@@ -1,11 +1,14 @@
 package main
 
-import "github.com/99designs/gqlgen/graphql"
+import (
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/trunglq04/go-grpc-graphql/account"
+)
 
 type Server struct {
 	accountClient *account.Client
-	catalogClient *catalog.Client
-	orderClient   *order.Client
+	// catalogClient *catalog.Client
+	// orderClient   *order.Client
 }
 
 func NewGraphQLServer(accountUrl, catalogUrl, OrderUrl string) (*Server, error) {
@@ -14,23 +17,23 @@ func NewGraphQLServer(accountUrl, catalogUrl, OrderUrl string) (*Server, error) 
 		return nil, err
 	}
 
-	catalogClient, err := catalog.NewClient(catalogUrl)
-	if err != nil {
-		accountClient.Close()
-		return nil, err
-	}
+	// catalogClient, err := catalog.NewClient(catalogUrl)
+	// if err != nil {
+	// 	accountClient.Close()
+	// 	return nil, err
+	// }
 
-	orderClient, err := order.NewClient(OrderUrl)
-	if err != nil {
-		accountClient.Close()
-		catalogClient.Close()
-		return nil, err
-	}
+	// orderClient, err := order.NewClient(OrderUrl)
+	// if err != nil {
+	// 	accountClient.Close()
+	// 	catalogClient.Close()
+	// 	return nil, err
+	// }
 
 	return &Server{
 		accountClient,
-		catalogClient,
-		orderClient,
+		// catalogClient,
+		// orderClient,
 	}, nil
 }
 
