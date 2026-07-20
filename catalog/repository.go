@@ -145,7 +145,6 @@ func (r *elasticRepository) ListProducts(ctx context.Context, skip, take uint64)
 			Price:       hit.Source.Price,
 		})
 	}
-
 	return products, nil
 }
 
@@ -174,8 +173,9 @@ func (r *elasticRepository) ListProductsWithIDs(ctx context.Context, ids []strin
 
 	var esResponse struct {
 		Docs []struct {
-			Found  bool    `json:"found"`
-			Source Product `json:"_source"`
+			ID     string          `json:"_id"`
+			Found  bool            `json:"found"`
+			Source productDocument `json:"_source"`
 		} `json:"docs"`
 	}
 
@@ -186,11 +186,14 @@ func (r *elasticRepository) ListProductsWithIDs(ctx context.Context, ids []strin
 	products := make([]Product, 0, len(esResponse.Docs))
 	for _, doc := range esResponse.Docs {
 		if doc.Found {
-			p := doc.Source
-			products = append(products, p)
+			products = append(products, Product{
+				ID:          doc.ID,
+				Name:        doc.Source.Name,
+				Description: doc.Source.Description,
+				Price:       doc.Source.Price,
+			})
 		}
 	}
-
 	return products, nil
 }
 
@@ -232,6 +235,5 @@ func (r *elasticRepository) searchProducts(ctx context.Context, query string, sk
 			Price:       hit.Source.Price,
 		})
 	}
-
 	return products, nil
 }
