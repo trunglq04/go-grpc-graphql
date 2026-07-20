@@ -9,6 +9,8 @@ require (
 	google.golang.org/protobuf v1.36.11
 )
 
+require github.com/elastic/go-elasticsearch v0.0.0
+
 require (
 	github.com/coder/websocket v1.8.15 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect

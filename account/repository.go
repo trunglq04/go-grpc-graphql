@@ -50,7 +50,7 @@ func (r *postgresRepository) PutAccount(ctx context.Context, a Account) error {
 	_, err := r.db.ExecContext(ctx, query, a.ID, a.Name)
 	if err != nil {
 		var pqErr *pq.Error
-		if errors.As(err, pqErr) {
+		if errors.As(err, &pqErr) {
 			return fmt.Errorf("PutAccount: SQL error code %s - %s: %w", pqErr.Code, pqErr.Message, err)
 		}
 		return fmt.Errorf("PutAccount: failed to insert account (id=%s): %w", a.ID, err)
@@ -64,8 +64,9 @@ func (r *postgresRepository) GetAccountByID(ctx context.Context, id string) (*Ac
 		SELECT id, name FROM accounts
 		WHERE id = $1
 	`
-	row := r.db.QueryRowContext(ctx, query, id)
+
 	a := &Account{}
+	row := r.db.QueryRowContext(ctx, query, id)
 	if err := row.Scan(&a.ID, &a.Name); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("GetAccountByID: account not found (id=%s)", id)

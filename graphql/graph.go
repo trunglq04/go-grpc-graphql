@@ -60,3 +60,4 @@ func (s *Server) ToExecutableSchema() graphql.ExecutableSchema {
 		Resolvers: s,
 	})
 }
+ 
