@@ -108,9 +108,15 @@ func (r *elasticRepository) ListProducts(ctx context.Context, skip, take uint64)
 	if err != nil {
 		return nil, fmt.Errorf("list products: %w", err)
 	}
+	if len(res.Hits.Hits) == 0 {
+		return nil, ErrNotFound
+	}
 
 	products := make([]Product, 0, len(res.Hits.Hits))
 	for _, hit := range res.Hits.Hits {
+		if hit.Id_ == nil {
+			return nil, errors.New("search result missing _id")
+		}
 		var doc productDocument
 		if err := json.Unmarshal(hit.Source_, &doc); err == nil {
 			products = append(products, Product{
@@ -119,6 +125,8 @@ func (r *elasticRepository) ListProducts(ctx context.Context, skip, take uint64)
 				Description: doc.Description,
 				Price:       doc.Price,
 			})
+		} else {
+			return nil, fmt.Errorf("decode product %q: %w", *hit.Id_, err)
 		}
 
 	}
@@ -145,9 +153,15 @@ func (r *elasticRepository) ListProductsWithIDs(ctx context.Context, ids []strin
 	if err != nil {
 		return nil, fmt.Errorf("list products by IDs: %w", err)
 	}
+	if len(res.Hits.Hits) == 0 {
+		return nil, ErrNotFound
+	}
 
 	products := make([]Product, 0, len(res.Hits.Hits))
 	for _, hit := range res.Hits.Hits {
+		if hit.Id_ == nil {
+			return nil, errors.New("search result missing _id")
+		}
 		var doc productDocument
 		if err := json.Unmarshal(hit.Source_, &doc); err == nil {
 			products = append(products, Product{
@@ -156,6 +170,8 @@ func (r *elasticRepository) ListProductsWithIDs(ctx context.Context, ids []strin
 				Description: doc.Description,
 				Price:       doc.Price,
 			})
+		} else {
+			return nil, fmt.Errorf("decode product %q: %w", *hit.Id_, err)
 		}
 	}
 	return products, nil
@@ -178,9 +194,15 @@ func (r *elasticRepository) searchProducts(ctx context.Context, query string, sk
 	if err != nil {
 		return nil, fmt.Errorf("search products: %w", err)
 	}
+	if len(res.Hits.Hits) == 0 {
+		return nil, ErrNotFound
+	}
 
 	products := make([]Product, 0, len(res.Hits.Hits))
 	for _, hit := range res.Hits.Hits {
+		if hit.Id_ == nil {
+			return nil, errors.New("search result missing _id")
+		}
 		var doc productDocument
 		if err = json.Unmarshal(hit.Source_, &doc); err == nil {
 			products = append(products, Product{
@@ -189,6 +211,8 @@ func (r *elasticRepository) searchProducts(ctx context.Context, query string, sk
 				Description: doc.Description,
 				Price:       doc.Price,
 			})
+		} else {
+			return nil, fmt.Errorf("decode product %q: %w", *hit.Id_, err)
 		}
 	}
 	return products, nil
