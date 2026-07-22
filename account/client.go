@@ -3,7 +3,7 @@ package account
 import (
 	"context"
 
-	"github.com/trunglq04/go-grpc-graphql/account/pb/github.com/trunglq04/go-grpc-graphql/account/pb"
+	"github.com/trunglq04/go-grpc-graphql/account/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

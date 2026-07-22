@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/core/mget"
 	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
 )
 
-const (
+var (
 	productIndex = "catalog"
-	documentType = "products"
+	ErrNotFound  = errors.New("Entity not found")
 )
-
-var ErrNotFound = errors.New("Entity not found")
 
 type Repository interface {
 	Close()
@@ -24,7 +24,7 @@ type Repository interface {
 	GetProductByID(ctx context.Context, id string) (*Product, error)
 	ListProducts(ctx context.Context, skip, take uint64) ([]Product, error)
 	ListProductsWithIDs(ctx context.Context, ids []string) ([]Product, error)
-	searchProducts(ctx context.Context, query string, skip, take uint64) ([]Product, error)
+	SearchProducts(ctx context.Context, query string, skip, take uint64) ([]Product, error)
 }
 
 type elasticRepository struct {
@@ -60,7 +60,8 @@ func (r *elasticRepository) PutProduct(ctx context.Context, p Product) error {
 		Price:       p.Price,
 	}
 
-	_, err := r.client.Index(productIndex).
+	_, err := r.client.
+		Index(productIndex).
 		Id(p.ID).
 		Request(doc).
 		Do(ctx)
@@ -72,12 +73,15 @@ func (r *elasticRepository) PutProduct(ctx context.Context, p Product) error {
 }
 
 func (r *elasticRepository) GetProductByID(ctx context.Context, id string) (*Product, error) {
-	res, err := r.client.Get(productIndex, id).Do(ctx)
+	res, err := r.client.
+		Get(productIndex, id).
+		Do(ctx)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
-
 	if !res.Found {
+		log.Println(err)
 		return nil, ErrNotFound
 	}
 
@@ -106,6 +110,7 @@ func (r *elasticRepository) ListProducts(ctx context.Context, skip, take uint64)
 		}).
 		Do(ctx)
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("list products: %w", err)
 	}
 	if len(res.Hits.Hits) == 0 {
@@ -138,67 +143,64 @@ func (r *elasticRepository) ListProductsWithIDs(ctx context.Context, ids []strin
 		return []Product{}, fmt.Errorf("no ids input")
 	}
 
-	res, err := r.client.
-		Search().
-		Index(productIndex).
-		Size(len(ids)).
-		Request(&search.Request{
-			Query: &types.Query{
-				Ids: &types.IdsQuery{
-					Values: ids,
-				},
-			},
+	mGetDocs := make([]types.MgetOperation, 0, len(ids))
+	for _, id := range ids {
+		mGetDocs = append(mGetDocs, types.MgetOperation{
+			Index_: &productIndex,
+			Id_:    id,
+		})
+	}
+	res, err := r.client.Mget().
+		Request(&mget.Request{
+			Docs: mGetDocs,
 		}).
 		Do(ctx)
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("list products by IDs: %w", err)
 	}
-	if len(res.Hits.Hits) == 0 {
-		return nil, ErrNotFound
-	}
 
-	products := make([]Product, 0, len(res.Hits.Hits))
-	for _, hit := range res.Hits.Hits {
-		if hit.Id_ == nil {
-			return nil, errors.New("search result missing _id")
-		}
-		var doc productDocument
-		if err := json.Unmarshal(hit.Source_, &doc); err == nil {
-			products = append(products, Product{
-				ID:          *hit.Id_,
-				Name:        doc.Name,
-				Description: doc.Description,
-				Price:       doc.Price,
-			})
-		} else {
-			return nil, fmt.Errorf("decode product %q: %w", *hit.Id_, err)
+	products := make([]Product, 0, len(res.Docs))
+	for _, doc := range res.Docs {
+		if gr, ok := doc.(*types.GetResult); ok && gr.Found {
+			var p productDocument
+			if err := json.Unmarshal(gr.Source_, &p); err == nil {
+				products = append(products, Product{
+					ID:          gr.Id_,
+					Name:        p.Name,
+					Description: p.Description,
+					Price:       p.Price,
+				})
+			}
 		}
 	}
 	return products, nil
 }
 
-func (r *elasticRepository) searchProducts(ctx context.Context, query string, skip uint64, take uint64) ([]Product, error) {
+func (r *elasticRepository) SearchProducts(ctx context.Context, query string, skip uint64, take uint64) ([]Product, error) {
 	res, err := r.client.Search().
 		Index(productIndex).
-		From(int(skip)).
-		Size(int(take)).
 		Request(&search.Request{
 			Query: &types.Query{
 				MultiMatch: &types.MultiMatchQuery{
 					Query:  query,
-					Fields: []string{"name^2", "description"},
+					Fields: []string{"name^2", "description"}, // name score 2, description score 1
 				},
 			},
 		}).
+		From(int(skip)).
+		Size(int(take)).
 		Do(ctx)
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("search products: %w", err)
 	}
 	if len(res.Hits.Hits) == 0 {
+		log.Println(err)
 		return nil, ErrNotFound
 	}
 
-	products := make([]Product, 0, len(res.Hits.Hits))
+	products := make([]Product, 0, res.Hits.Total.Value)
 	for _, hit := range res.Hits.Hits {
 		if hit.Id_ == nil {
 			return nil, errors.New("search result missing _id")

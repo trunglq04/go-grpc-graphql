@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/trunglq04/go-grpc-graphql/account/pb/github.com/trunglq04/go-grpc-graphql/account/pb"
+	pb "github.com/trunglq04/go-grpc-graphql/account/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
