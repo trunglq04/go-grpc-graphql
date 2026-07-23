@@ -12,20 +12,24 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+// This server GET REQUESTS from other services (Inbound)
+// Get requests and process it in service
+
 type grpcServer struct {
-	pb.UnimplementedCatalogServiceServer
-	service Service
+	// Impl it help not getting interrupted when update the codebase
+	pb.UnimplementedCatalogServiceServer         // Forward compat
+	service                              Service // Business logic
 }
 
 func ListenGRPC(s Service, port int) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))	// Open port
 	if err != nil {
-		return err
+		return err // err if cannot use the port
 	}
-	serv := grpc.NewServer()
-	pb.RegisterCatalogServiceServer(serv, &grpcServer{service: s})
-	reflection.Register(serv)
-	return serv.Serve(lis)
+	serv := grpc.NewServer() // Create gRPC server container without Interceptor (gRPC middleware)
+	pb.RegisterCatalogServiceServer(serv, &grpcServer{service: s}) // Map routes + handlers
+	reflection.Register(serv) // Turn on reflection (debug), which allow client to discover service schema at runtime, should be turn off on production due to public the schema
+	return serv.Serve(lis)	// Run server loop
 }
 
 func (s *grpcServer) PostProduct(ctx context.Context, r *pb.PostProductRequest) (*pb.PostProductResponse, error) {

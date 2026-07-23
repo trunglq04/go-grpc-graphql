@@ -9,13 +9,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// This client CALL OTHER SERVICES (Outbound)
+// Wrap proto calls to return back domain model (Product instead of *pb.Product)
+
 type Client struct {
 	conn    *grpc.ClientConn
 	service pb.CatalogServiceClient
 }
 
 func NewClient(url string) (*Client, error) {
-	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials())) // not required TLS (debug env)
 	if err != nil {
 		return nil, err
 	}
