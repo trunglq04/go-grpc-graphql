@@ -4,7 +4,7 @@
 // 	protoc        v3.21.12
 // source: catalog.proto
 
-package __
+package pb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -424,7 +424,7 @@ const file_catalog_proto_rawDesc = "" +
 	"\vPostProduct\x12\x16.pb.PostProductRequest\x1a\x17.pb.PostProductResponse\"\x00\x12=\n" +
 	"\n" +
 	"GetProduct\x12\x15.pb.GetProductRequest\x1a\x16.pb.GetProductResponse\"\x00\x12@\n" +
-	"\vGetProducts\x12\x16.pb.GetProductsRequest\x1a\x17.pb.GetProductsResponse\"\x00B\x04Z\x02./b\x06proto3"
+	"\vGetProducts\x12\x16.pb.GetProductsRequest\x1a\x17.pb.GetProductsResponse\"\x00B\x06Z\x04./pbb\x06proto3"
 
 var (
 	file_catalog_proto_rawDescOnce sync.Once

@@ -3,7 +3,7 @@ package catalog
 import (
 	"context"
 
-	pb "github.com/trunglq04/go-grpc-graphql/catalog/pb"
+	"github.com/trunglq04/go-grpc-graphql/catalog/pb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

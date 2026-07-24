@@ -31,6 +31,7 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/elastic/go-elasticsearch/v9 v9.4.2
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lib/pq v1.12.3
 	github.com/sosodev/duration v1.4.0 // indirect

@@ -21,14 +21,15 @@ func main() {
 	}
 
 	var r account.Repository
-	retry.ForeverSleep(2*time.Second, func(_ int) (err error) {
+	retry.ForeverSleep(2*time.Second, func(_ int) error {
 		r, err = account.NewPostgresRepository(cfg.DatabaseURL)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
+		return err
 	})
-	defer r.Close()
+	defer func() {
+		if r != nil {
+			r.Close()
+		}
+	}()
 
 	log.Println("Listening on port 8080...")
 	s := account.NewService(r)
